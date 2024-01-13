@@ -1,91 +1,209 @@
+import pygame
+import sys
 import random
 
-# カードの属性
-card_types = ['A', 'B', 'C', 'D', 'E']
+# Pygameの初期化
+pygame.init()
 
-# カードの数字
-all_numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-deck = []
-selected_cards = []
-first_clicked_card = None
+# ウィンドウのサイズ
+width, height = 970, 600
 
-# 山札からカードを引く
-def draw_cards():
-    global deck, selected_cards, first_clicked_card
-    # 山札を初期化
-    deck = all_numbers.copy()
-    selected_cards = []
+# ウィンドウの作成
+screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption("Prime Number Game")
 
-    # 山札から5枚引く
-    for i in range(5):
-        random_index = random.randint(0, len(deck) - 1)
-        drawn_card = deck.pop(random_index)
-        card_type = card_types[i % len(card_types)]
-        selected_cards.append({'number': drawn_card, 'type': card_type})
+# 画像のロード
+background_image = pygame.image.load('background.jpg')
 
-    display_cards()
+# フォントの設定
+font_size = 36
+font = pygame.font.Font(None, font_size)
 
-# カードの表示
-def display_cards():
-    print("選択したカード:")
-    for card in selected_cards:
-        print(f"{card['number']} {card['type']}")
-    update_result()
+# 長方形のサイズと配置
+rect_width, rect_height = 140, 210
+margin = 40
+shadow_offset = 10  # 影のオフセット
 
-# カードの選択
-def select_card(number, index):
-    global first_clicked_card
-    if first_clicked_card is None:
-        # 一回目のクリック
-        first_clicked_card = {'number': number, 'index': index}
-    else:
-        # 二回目のクリック
-        swap_cards(first_clicked_card['index'], index)
-        first_clicked_card = None
-    display_cards()
+# ランダムな数字の生成と変数への保存
+def generate_card():
+    return random.randint(1, 9)
 
-# カードの入れ替え
-def swap_cards(index1, index2):
-    selected_cards[index1], selected_cards[index2] = selected_cards[index2], selected_cards[index1]
+# カードの初期配布
+card1 = generate_card()
+card2 = generate_card()
+card3 = generate_card()
+card4 = generate_card()
+card5 = generate_card()
 
-# 結果の更新
-def update_result():
-    selected_number = ''.join(str(card['number']) for card in selected_cards)
-    print(f"選択した数字: {selected_number}")
+# ターゲット
+five_1 = int(f"{card1}{card2}{card3}{card4}{card5}")
+four_1 = int(f"{card1}{card2}{card3}{card4}")
+four_2 = int(f"{card2}{card3}{card4}{card5}")
+three_1 = int(f"{card1}{card2}{card3}")
+three_2 = int(f"{card2}{card3}{card4}")
+three_3 = int(f"{card3}{card4}{card5}")
+two_1 = int(f"{card1}{card2}")
+two_2 = int(f"{card2}{card3}")
+two_3 = int(f"{card3}{card4}")
+two_4 = int(f"{card4}{card5}")   #  & card1~5
 
-# 数字を作り、素数か判定する
-def arrange_cards():
-    selected_number = ''.join(str(card['number']) for card in selected_cards)
-    result = "素数です" if is_prime(int(selected_number)) else "素数ではありません"
-    print(result)
-
-# 素数かどうかの判定
-def is_prime(num):
-    if num < 2:
+# 素数かどうかを判定する関数
+def is_prime(n):
+    if n < 2:
         return False
-    for i in range(2, num):
-        if num % i == 0:
+    for i in range(2, int(n**0.5) + 1):
+        if n % i == 0:
             return False
     return True
 
-# ゲームのメインループ
-while True:
-    print("\n1. 山札からカードを引く")
-    print("2. カードを入れ替える")
-    print("3. 素数か判定する")
-    print("4. ゲーム終了")
-    
-    choice = input("選択してください (1-4): ")
+# 初期のポイント
+score = 0
 
-    if choice == '1':
-        draw_cards()
-    elif choice == '2':
-        index = int(input("入れ替えるカードの番号を選択してください (0-4): "))
-        select_card(selected_cards[index]['number'], index)
-    elif choice == '3':
-        arrange_cards()
-    elif choice == '4':
-        print("ゲームを終了します。")
-        break
-    else:
-        print("無効な選択です。再度選択してください。")
+# クリックされたカードの位置を保存する変数
+clicked_card1 = None
+
+# 右クリックで引き直す機能の追加
+redraw_count = 5  # 引き直し回数の初期設定
+
+# カードの引き直し関数
+def redraw_card(card_name):
+    global redraw_count  # redraw_countをグローバル変数として宣言
+    if redraw_count > 0:
+        globals()[card_name] = generate_card()
+        redraw_count -= 1
+
+# クリックされた位置にあるカードを特定する関数
+def find_clicked_card(pos):
+    num_rectangles = 5
+    total_width = num_rectangles * rect_width + (num_rectangles - 1) * margin
+    start_x = (width - total_width) // 2
+    start_y = height - 30 - rect_height
+
+    for i in range(num_rectangles):
+        rect_x = start_x + i * (rect_width + margin)
+        card_rect = pygame.Rect(rect_x, start_y, rect_width, rect_height)
+
+        if card_rect.collidepoint(pos):
+            return i + 1  # カード番号を返す
+
+    return None  # クリックされた位置にカードがない場合はNoneを返す
+
+# カードの位置を入れ替える関数
+def swap_cards(card1_name, card2_name):
+    globals()[card1_name], globals()[card2_name] = globals()[card2_name], globals()[card1_name]
+
+# スコア計算関数
+def add_score():
+    global score
+    targets =  [five_1, 
+                four_1, four_2, 
+                three_1, three_2, three_3, 
+                two_1, two_2, two_3, two_4, 
+                card1, card2, card3, card4, card5]
+
+    score = 0
+    for target in targets:
+        if is_prime(target):
+            if target == five_1:
+                score += 10000
+            elif target in [four_1, four_2]:
+                score += 1000
+            elif target in [three_1, three_2, three_3]:
+                score += 500
+            elif target in [two_1, two_2, two_3, two_4]:
+                score += 200
+            elif target in [card1, card2, card3, card4, card5]:
+                score += 100
+
+# カードの描画関数
+def draw_cards():
+    # 長方形の描画（影を含む）
+    num_rectangles = 5  # 5つの長方形を配置することを想定
+    total_width = num_rectangles * rect_width + (num_rectangles - 1) * margin
+    start_x = (width - total_width) // 2
+    start_y = height - 30 - rect_height  # 下部から30px上に配置
+
+    for i in range(num_rectangles):
+        rect_x = start_x + i * (rect_width + margin)
+
+        # 影の描画
+        shadow_rect = pygame.Rect(rect_x + shadow_offset, start_y + shadow_offset, rect_width, rect_height)
+        pygame.draw.rect(screen, (0, 0, 0, 100), shadow_rect)  # 半透明度を持つ黒い色で描画
+
+        # カードの描画
+        card = globals()[f"card{i + 1}"]  # card1, card2, ..., card5
+        card_rect = pygame.Rect(rect_x, start_y, rect_width, rect_height)
+        pygame.draw.rect(screen, (255, 255, 255), card_rect)  # カードの描画
+
+        # 数字の描画
+        text = font.render(str(card), True, (0, 0, 0))  # テキストを描画
+        text_rect = text.get_rect(center=(rect_x + rect_width // 2, start_y + rect_height // 2))
+        screen.blit(text, text_rect)
+
+# ゲームループ
+while True:
+    # イベントの処理
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:  # 左クリック
+                clicked_pos = event.pos
+
+                # カードがクリックされた場合の処理
+                clicked_card = find_clicked_card(clicked_pos)
+
+                if clicked_card:
+                    if clicked_card1 is None:
+                        # 1回目のクリックならclicked_card1に保存
+                        clicked_card1 = clicked_card
+                    else:
+                        # 2回目のクリックで、保存されたカードと入れ替え
+                        clicked_card2 = clicked_card
+                        card1_name = f"card{clicked_card1}"
+                        card2_name = f"card{clicked_card2}"
+
+                        # カードの位置を入れ替え
+                        swap_cards(card1_name, card2_name)
+
+                        # クリックされたカードの位置をリセット
+                        clicked_card1 = None
+
+            elif event.button == 3:  # 右クリック
+                clicked_pos = event.pos
+
+                # 右クリックされた位置にあるカードを特定
+                clicked_card = find_clicked_card(clicked_pos)
+
+                if clicked_card:
+                    card_name = f"card{clicked_card}"
+                    redraw_card(card_name)
+
+        # キーボードの特定のキーが押された場合
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                # スペースキーが押されたらスコアを計算
+                add_score()
+                print(f"Score: {score}")
+
+                # 引き直し回数の表示
+                print(f"Redraw Count: {redraw_count}")
+
+    # 画面のクリア
+    screen.blit(background_image, (0, 0))
+
+    # カードの描画
+    draw_cards()
+
+    # ポイント表示
+    score_text = font.render(f"Score: {score}", True, (255, 255, 255))
+    screen.blit(score_text, (10, 10))
+
+    # 引き直し回数の表示
+    redraw_count_text = font.render(f"Redraw Count: {redraw_count}", True, (255, 255, 255))
+    screen.blit(redraw_count_text, (10, 70))
+
+    # 画面の更新
+    pygame.display.flip()
