@@ -12,7 +12,7 @@ pygame.display.set_caption("Prime Number Game")
 background_image = pygame.image.load('background.jpg') # 背景のロード
 font_size = 36                                         # フォントの設定
 font = pygame.font.Font(None, font_size)
-scene = 1                                              # 初期シーン設定
+scene = 0                                              # 初期シーン設定
 
 # 初期詳細設定
 score = 0                           #初期スコア
@@ -23,8 +23,30 @@ rect_width, rect_height = 140, 210  # 長方形の基本サイズ設定
 margin = 40                         # その配置
 shadow_offset = 10                  # 影の設定
 
+# フォントの設定（別のフォントファイルを指定）
+font_path = "TEMPSITC.ttf"  # フォントファイルのパスを指定
+font_size = 36
+font = pygame.font.Font(font_path, font_size)
+
 ############タイトル描写################################################################################
 while scene == 0:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+        screen.blit(background_image, (0, 0))  # 背景画像を描画
+
+        font_size = 108
+        title = font.render("Prime Number Poker", True, (255, 255, 255))  # テキストを描画
+        title_rect = title.get_rect(center=(width / 2, height / 5))
+        screen.blit(title, title_rect)
+
+        # クリックでゲームを開始
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            scene = 1
+
+    pygame.display.flip()
 ############タイトル終了################################################################################
 
 ##########   関数の定義   ################################################################################################
