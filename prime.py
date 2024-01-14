@@ -2,52 +2,152 @@ import pygame
 import sys
 import random
 
-# Pygameの初期化
 pygame.init()
 
-#画面設定
-width, height = 970, 600                               # ウィンドウのサイズ
-screen = pygame.display.set_mode((width, height))      # ウィンドウの作成
+# 画面設定
+width, height = 970, 600
+screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Prime Number Game")
-background_image = pygame.image.load('background.jpg') # 背景のロード
-font_size = 36                                         # フォントの設定
-font = pygame.font.Font(None, font_size)
-scene = 0                                              # 初期シーン設定
+background_image = pygame.image.load('background.jpg')
+scene = 0
 
-# 初期詳細設定
-score = 0                           #初期スコア
-score_element = []                  #初期スコア要素
-keep_A = None                       # クリックされたカードの数字を保管する変数
-redraw_count = 5                    # カード引き直し回数の初期設定
-rect_width, rect_height = 140, 210  # 長方形の基本サイズ設定
-margin = 40                         # その配置
-shadow_offset = 10                  # 影の設定
-
-# フォントの設定（別のフォントファイルを指定）
-font_path = "TEMPSITC.ttf"  # フォントファイルのパスを指定
+font_path = "TEMPSITC.ttf"
+font_path1 = "ipaexg.ttf"
 font_size = 36
 font = pygame.font.Font(font_path, font_size)
+title_font_size = 72
+title_font = pygame.font.Font(font_path, title_font_size)
+play_font_size = 36
+play_font = pygame.font.Font(font_path, play_font_size)
+explain_font_size = 18
+explain_font = pygame.font.Font(font_path1, explain_font_size)
+number_font_size = 72
+number_font = pygame.font.Font(font_path, number_font_size)
 
-############タイトル描写################################################################################
+score = 0
+score_element = []
+keep_A = None
+redraw_count = 5
+rect_width, rect_height = 140, 210
+margin = 40
+shadow_offset = 10
+
+# ボタンの設定
+button_width, button_height = 200, 50
+button_color = (100, 100, 100)
+button_hover_color = (150, 150, 150)
+
+def draw_button(screen, text, position, size, font, button_color, hover_color, action=None):
+    button_rect = pygame.Rect(position, size)
+    mouse_pos = pygame.mouse.get_pos()
+    button_hover = button_rect.collidepoint(mouse_pos)
+
+    if button_hover:
+        pygame.draw.rect(screen, hover_color, button_rect)
+    else:
+        pygame.draw.rect(screen, button_color, button_rect)
+
+    text_surface = font.render(text, True, (255, 255, 255))
+    text_rect = text_surface.get_rect(center=button_rect.center)
+    screen.blit(text_surface, text_rect)
+
+    if button_hover and pygame.mouse.get_pressed()[0] == 1:
+        if action is not None:
+            action()
+
+# ボタンがクリックされたときの処理
+def score_table_button_action():
+    global scene
+    scene = 2
+
+def judge_button_action():
+    global scene
+    scene = 3
+
+
+############タイトル################################################################################
 while scene == 0:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
 
-        screen.blit(background_image, (0, 0))  # 背景画像を描画
+    screen.blit(background_image, (0, 0))
 
-        font_size = 108
-        title = font.render("Prime Number Poker", True, (255, 255, 255))  # テキストを描画
-        title_rect = title.get_rect(center=(width / 2, height / 5))
-        screen.blit(title, title_rect)
+    title_text = title_font.render("Prime Number Poker", True, (255, 255, 255))
+    title_rect = title_text.get_rect(center=(width / 2, height / 5))
+    screen.blit(title_text, title_rect)
 
-        # クリックでゲームを開始
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            scene = 1
+    explain_text_lines = [
+        "このゲームは5つの数字を好きな順番に並べ替えて素数を作って高得点を目指すゲームです。",
+        "",
+        "左クリックで1回目にクリックしたカードと2回目にクリックしたカードを交換することができます。",
+        "また、右クリックで新しいカードに変更できます。",
+    ]
+    
+    play_text = play_font.render("--Space to PLAY!--", True, (255, 255, 255))
+    play_rect = play_text.get_rect(center=(width / 2, 3*height / 5))
+    screen.blit(play_text, play_rect)
+    
+    y_offset = 0
+    for line in explain_text_lines:
+        line_text = explain_font.render(line, True, (255, 255, 255))
+        line_rect = line_text.get_rect(center=(width / 2, height / 3 + y_offset))
+        screen.blit(line_text, line_rect)
+        y_offset += 20
+
+    draw_button(screen, "Score Table", (width / 2 - button_width / 2, height / 2 + 140), (button_width, button_height),
+                font, button_color, button_hover_color, score_table_button_action)
 
     pygame.display.flip()
+    # スペースキーの処理
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_SPACE]:
+        scene = 1
+
+
 ############タイトル終了################################################################################
+
+############点数表################################################################################
+while scene == 2:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    screen.blit(background_image, (0, 0))  # 背景画像を描画
+
+    title_text = title_font.render("Score Table", True, (255, 255, 255))
+    title_rect = title_text.get_rect(center=(width / 2, height / 5))
+    screen.blit(title_text, title_rect)
+    
+    explain_text_lines = [
+        "5桁の素数…10000点",
+        "4桁の素数…2000点",
+        "3桁の素数…1000点",
+        "2桁の素数…500点",
+        "1桁の素数…200点",
+        "(以下未実装)",
+    ]
+    y_offset = 0
+    for line in explain_text_lines:
+        line_text = explain_font.render(line, True, (255, 255, 255))
+        line_rect = line_text.get_rect(center=(width / 2, height / 3 + y_offset))
+        screen.blit(line_text, line_rect)
+        y_offset += 20  # 行ごとに20ピクセル下にずらす
+    
+    play_text = play_font.render("--Space to PLAY!--", True, (255, 255, 255))
+    play_rect = play_text.get_rect(center=(width / 2, 4*height / 5))
+    screen.blit(play_text, play_rect)
+
+    pygame.display.flip()
+
+    # スペースキーの処理
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_SPACE]:
+        scene = 1
+
+############点数表終了################################################################################
 
 ##########   関数の定義   ################################################################################################
 
@@ -154,9 +254,9 @@ def draw_cards():
         pygame.draw.rect(screen, (255, 255, 255), card_rect)  
 
         # 数字の描画
-        text = font.render(str(card), True, (0, 0, 0))  # テキストを描画
-        text_rect = text.get_rect(center=(rect_x + rect_width // 2, start_y + rect_height // 2))
-        screen.blit(text, text_rect)
+        number = number_font.render(str(card), True, (0, 0, 0))  # テキストを描画
+        number_rect = number.get_rect(center=(rect_x + rect_width // 2, start_y + rect_height // 2))
+        screen.blit(number, number_rect)
 
 # カードの初期配布
 card1 = generate_card()
@@ -217,12 +317,16 @@ while scene == 1:
     score = 0
     score_element = []
     add_score()
-    
+
     #########画面の描写#########
     
     screen.blit(background_image, (0, 0)) # 画面のクリア
 
     draw_cards()                          # カードの描画
+
+    draw_button(screen, "Judge", (width - button_width - margin, margin), (button_width, button_height),
+                font, button_color, button_hover_color, judge_button_action)
+
 
     score_text = font.render(f"Score: {score}", True, (255, 255, 255))# ポイント表示
     screen.blit(score_text, (10, 10))
@@ -239,4 +343,37 @@ while scene == 1:
     # 画面の更新
     pygame.display.flip()
 
+
 #############メインループ終了###################################################################
+        
+
+############結果################################################################################
+while scene == 3:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    screen.blit(background_image, (0, 0))  # 背景画像を描画
+
+    title_text = title_font.render(f'Result… {score}pt', True, (255, 255, 255))
+    title_rect = title_text.get_rect(center=(width / 2, height / 6))
+    screen.blit(title_text, title_rect)
+    
+
+    y_position = 150  # リストの要素を描画
+    for item in score_element:
+        score_element_text = font.render(str(item), True, (255, 255, 255))
+        screen.blit(score_element_text, (width / 2, y_position))
+        y_position += 40
+    
+    play_text = play_font.render("--Space to END--", True, (255, 255, 255))
+    play_rect = play_text.get_rect(center=(width / 2, 6*height / 7))
+    screen.blit(play_text, play_rect)
+
+    pygame.display.flip()
+    keys = pygame.key.get_pressed()     # スペースキーで終了
+    if keys[pygame.K_SPACE]:
+        pygame.quit()
+
+############結果終了################################################################################
