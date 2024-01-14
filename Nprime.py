@@ -61,7 +61,7 @@ score = 0
 score_element = []
 
 # クリックされたカードの位置を保存する変数
-clicked_card1 = None
+keep_A = None
 
 # 右クリックで引き直す機能の追加
 redraw_count = 5  # 引き直し回数の初期設定
@@ -153,7 +153,7 @@ while True:
     for item in score_element:
         score_element_text = font.render(str(item), True, (255, 255, 255))
         screen.blit(score_element_text, (10, y_position))
-        y_position += 40
+        y_position += 40 
 
     # 引き直し回数の表示
     redraw_count_text = font.render(f"Redraw Count: {redraw_count}", True, (255, 255, 255))

@@ -38,17 +38,6 @@ card5 = generate_card()
 cards = []
 cards.extend([card1, card2, card3, card4, card5])
 
-# ターゲット
-five_1 = int(f"{card1}{card2}{card3}{card4}{card5}")
-four_1 = int(f"{card1}{card2}{card3}{card4}")
-four_2 = int(f"{card2}{card3}{card4}{card5}")
-three_1 = int(f"{card1}{card2}{card3}")
-three_2 = int(f"{card2}{card3}{card4}")
-three_3 = int(f"{card3}{card4}{card5}")
-two_1 = int(f"{card1}{card2}")
-two_2 = int(f"{card2}{card3}")
-two_3 = int(f"{card3}{card4}")
-two_4 = int(f"{card4}{card5}")   #  & card1~5
 
 # 素数かどうかを判定する関数
 def is_prime(n):
@@ -64,7 +53,7 @@ score = 0
 score_element = []
 
 # クリックされたカードの位置を保存する変数
-clicked_card1 = None
+keep_A = None
 
 # 右クリックで引き直す機能の追加
 redraw_count = 5  # 引き直し回数の初期設定
@@ -93,18 +82,32 @@ def find_clicked_card(pos):
     return None  # クリックされた位置にカードがない場合はNoneを返す
 
 # カードの位置を入れ替える関数
-def swap_cards(card1_name, card2_name):
+def swap_cards():
     globals()[card1_name], globals()[card2_name] = globals()[card2_name], globals()[card1_name]
 
 # スコア計算関数
 def add_score():
     global score
+    global card1, card2, card3, card4, card5  
+    
+    # ターゲット
+    five_1 = int(f"{card1}{card2}{card3}{card4}{card5}")
+    four_1 = int(f"{card1}{card2}{card3}{card4}")
+    four_2 = int(f"{card2}{card3}{card4}{card5}")
+    three_1 = int(f"{card1}{card2}{card3}")
+    three_2 = int(f"{card2}{card3}{card4}")
+    three_3 = int(f"{card3}{card4}{card5}")
+    two_1 = int(f"{card1}{card2}")
+    two_2 = int(f"{card2}{card3}")
+    two_3 = int(f"{card3}{card4}")
+    two_4 = int(f"{card4}{card5}")   #  & card1~5
+
     targets =  [five_1, 
                 four_1, four_2, 
                 three_1, three_2, three_3, 
                 two_1, two_2, two_3, two_4, 
                 card1, card2, card3, card4, card5]
-
+    
     score = 0
     for target in targets:
         if is_prime(target):
@@ -161,20 +164,28 @@ while True:
                 clicked_card = find_clicked_card(clicked_pos)
 
                 if clicked_card:
-                    if clicked_card1 is None:
-                        # 1回目のクリックならclicked_card1に保存
+                    if keep_A is None:
+                        # 1回目のクリックならkeep_Aに保存
                         clicked_card1 = clicked_card
+                        keep_A = globals()["card" + str(clicked_card1)]
+
                     else:
                         # 2回目のクリックで、保存されたカードと入れ替え
                         clicked_card2 = clicked_card
+                        keep_B = globals()["card" + str(clicked_card2)]
+                        cards[clicked_card2 - 1] = keep_A
+                        cards[clicked_card1 - 1] = keep_B
                         card1_name = f"card{clicked_card1}"
                         card2_name = f"card{clicked_card2}"
-
                         # カードの位置を入れ替え
-                        swap_cards(card1_name, card2_name)
+                        swap_cards()
 
                         # クリックされたカードの位置をリセット
-                        clicked_card1 = None
+                        keep_A = None
+                        # スコアを計算
+                        score = 0
+                        add_score()
+                        print(f"Score: {score}")
 
             elif event.button == 3:  # 右クリック
                 clicked_pos = event.pos
@@ -186,22 +197,16 @@ while True:
                     card_name = f"card{clicked_card}"
                     redraw_card(card_name)
 
-        # キーボードの特定のキーが押された場合
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
-                # スペースキーが押されたらスコアを計算
-                score = 0
-                add_score()
-                print(f"Score: {score}")
-
-                # 引き直し回数の表示
-                print(f"Redraw Count: {redraw_count}")
-
     # 画面のクリア
     screen.blit(background_image, (0, 0))
 
     # カードの描画
     draw_cards()
+
+    # スコアを計算
+    score = 0
+    score_element = []
+    add_score()
 
     # ポイント表示
     score_text = font.render(f"Score: {score}", True, (255, 255, 255))
