@@ -35,6 +35,9 @@ card3 = generate_card()
 card4 = generate_card()
 card5 = generate_card()
 
+cards = []
+cards.extend([card1, card2, card3, card4, card5])
+
 # ターゲット
 five_1 = int(f"{card1}{card2}{card3}{card4}{card5}")
 four_1 = int(f"{card1}{card2}{card3}{card4}")
@@ -58,6 +61,7 @@ def is_prime(n):
 
 # 初期のポイント
 score = 0
+score_element = []
 
 # クリックされたカードの位置を保存する変数
 clicked_card1 = None
@@ -104,15 +108,16 @@ def add_score():
     score = 0
     for target in targets:
         if is_prime(target):
+            score_element.append(target)
             if target == five_1:
                 score += 10000
-            elif target in [four_1, four_2]:
+            if target in [four_1, four_2]:
                 score += 1000
-            elif target in [three_1, three_2, three_3]:
+            if target in [three_1, three_2, three_3]:
                 score += 500
-            elif target in [two_1, two_2, two_3, two_4]:
+            if target in [two_1, two_2, two_3, two_4]:
                 score += 200
-            elif target in [card1, card2, card3, card4, card5]:
+            if target in [card1, card2, card3, card4, card5]:
                 score += 100
 
 # カードの描画関数
@@ -185,6 +190,7 @@ while True:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 # スペースキーが押されたらスコアを計算
+                score = 0
                 add_score()
                 print(f"Score: {score}")
 
@@ -200,6 +206,13 @@ while True:
     # ポイント表示
     score_text = font.render(f"Score: {score}", True, (255, 255, 255))
     screen.blit(score_text, (10, 10))
+
+    # リストの要素を描画
+    y_position = 110
+    for item in score_element:  # Fix here
+        score_element_text = font.render(str(item), True, (255, 255, 255))
+        screen.blit(score_element_text, (10, y_position))
+        y_position += 40
 
     # 引き直し回数の表示
     redraw_count_text = font.render(f"Redraw Count: {redraw_count}", True, (255, 255, 255))

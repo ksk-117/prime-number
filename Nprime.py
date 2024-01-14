@@ -28,7 +28,7 @@ shadow_offset = 10  # 影のオフセット
 def generate_card():
     return random.randint(1, 9)
 
-# カードの初期配布
+# カードの初期配置
 card1 = generate_card()
 card2 = generate_card()
 card3 = generate_card()
@@ -58,62 +58,13 @@ def is_prime(n):
 
 # 初期のポイント
 score = 0
+score_element = []
 
 # クリックされたカードの位置を保存する変数
 clicked_card1 = None
 
 # 右クリックで引き直す機能の追加
 redraw_count = 5  # 引き直し回数の初期設定
-
-# カードの引き直し関数
-def redraw_card(card_name):
-    global redraw_count  # redraw_countをグローバル変数として宣言
-    if redraw_count > 0:
-        globals()[card_name] = generate_card()
-        redraw_count -= 1
-
-# クリックされた位置にあるカードを特定する関数
-def find_clicked_card(pos):
-    num_rectangles = 5
-    total_width = num_rectangles * rect_width + (num_rectangles - 1) * margin
-    start_x = (width - total_width) // 2
-    start_y = height - 30 - rect_height
-
-    for i in range(num_rectangles):
-        rect_x = start_x + i * (rect_width + margin)
-        card_rect = pygame.Rect(rect_x, start_y, rect_width, rect_height)
-
-        if card_rect.collidepoint(pos):
-            return i + 1  # カード番号を返す
-
-    return None  # クリックされた位置にカードがない場合はNoneを返す
-
-# カードの位置を入れ替える関数
-def swap_cards(card1_name, card2_name):
-    globals()[card1_name], globals()[card2_name] = globals()[card2_name], globals()[card1_name]
-
-# スコア計算関数
-def add_score():
-    global score
-    targets =  [five_1, 
-                four_1, four_2, 
-                three_1, three_2, three_3, 
-                two_1, two_2, two_3, two_4, 
-                card1, card2, card3, card4, card5]
-
-    score = 0
-    for target in targets:
-        if is_prime(target):
-            if target == five_1:
-                score += 10000
-            elif target in [four_1, four_2]:
-                score += 1000
-            elif target in [three_1, three_2, three_3]:
-                score += 500
-            elif target in [two_1, two_2, two_3, two_4]:
-                score += 200
-            elif target in [card1, card2, card3, card4, card5]:
-                score += 100
 
 # カードの描画関数
 def draw_cards():
@@ -171,20 +122,16 @@ while True:
                         # クリックされたカードの位置をリセット
                         clicked_card1 = None
 
-            elif event.button == 3:  # 右クリック
-                clicked_pos = event.pos
-
-                # 右クリックされた位置にあるカードを特定
-                clicked_card = find_clicked_card(clicked_pos)
-
-                if clicked_card:
-                    card_name = f"card{clicked_card}"
-                    redraw_card(card_name)
+                        # スコア計算
+                        score = 0
+                        add_score()
+                        print(f"Score: {score}")
 
         # キーボードの特定のキーが押された場合
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 # スペースキーが押されたらスコアを計算
+                score = 0
                 add_score()
                 print(f"Score: {score}")
 
@@ -201,9 +148,17 @@ while True:
     score_text = font.render(f"Score: {score}", True, (255, 255, 255))
     screen.blit(score_text, (10, 10))
 
+    # リストの要素を描画
+    y_position = 110
+    for item in score_element:
+        score_element_text = font.render(str(item), True, (255, 255, 255))
+        screen.blit(score_element_text, (10, y_position))
+        y_position += 40
+
     # 引き直し回数の表示
     redraw_count_text = font.render(f"Redraw Count: {redraw_count}", True, (255, 255, 255))
     screen.blit(redraw_count_text, (10, 70))
 
     # 画面の更新
     pygame.display.flip()
+
